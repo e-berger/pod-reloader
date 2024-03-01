@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"github.com/e-berger/pod-reloader/internal/config"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	FREQUENCY_CHECK_SECONDS = 10
+	FREQUENCY_CHECK_SECONDS = 30
 )
 
 func main() {
@@ -46,7 +47,14 @@ func main() {
 		}
 	}
 
-	ticker := time.NewTicker(time.Second * FREQUENCY_CHECK_SECONDS)
+	frequency := FREQUENCY_CHECK_SECONDS
+	frequencyEnv := os.Getenv("FREQUENCY_CHECK_SECONDS")
+	if frequencyEnv != "" {
+		frequencyInt64, _ := strconv.ParseInt(frequencyEnv, 10, 64)
+		frequency = int(frequencyInt64)
+	}
+
+	ticker := time.NewTicker(time.Second * time.Duration(frequency))
 	done := make(chan bool)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()

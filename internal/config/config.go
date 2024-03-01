@@ -112,3 +112,11 @@ func GetRegistryAuth(p *process.Process) (*registry.Auths, error) {
 	}
 	return nil, nil
 }
+
+func Getenv(key, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+	return value
+}

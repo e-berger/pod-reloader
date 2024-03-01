@@ -13,6 +13,7 @@ In `deploy` folder, you can find a chart helm to install this project
 LOGLEVEL : Set log level for the application (default: INFO), possible values: DEBUG, INFO, WARN, ERROR
 REGISTRY : Set type of registry to use for images checking (required), possible values: DOCKER, ECR (for check by aws sdk instead of docker)
 REGISTRY_AUTH_SECRET: Set the name of the secret to use for registry authentication (can be omitted if no authentication is required)
+FREQUENCY_CHECK_SECONDS: Set the frequency of main loop in seconds (default: 30)
 
 ### Local development
 
