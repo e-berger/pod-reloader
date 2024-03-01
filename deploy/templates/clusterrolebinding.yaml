@@ -1,0 +1,12 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: {{ include "pod-reloader.serviceAccountName" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "pod-reloader.serviceAccountName" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "pod-reloader.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}

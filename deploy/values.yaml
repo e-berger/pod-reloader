@@ -1,0 +1,15 @@
+image:
+  repository: ghcr.io/e-berger/pod-reloader
+  pullPolicy: Always
+
+replicaCount: 1
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+serviceAccount:
+  create: true
+  name: pod-reloader

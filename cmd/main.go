@@ -2,70 +2,68 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath"
+	"os/signal"
+	"time"
 
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"github.com/e-berger/pod-reloader/internal/config"
+	"github.com/e-berger/pod-reloader/internal/process"
+	"github.com/e-berger/pod-reloader/internal/registry"
 )
 
-func findKubeconfig() string {
-	kubeConfigPath := os.Getenv("KUBECONFIG")
-	if kubeConfigPath != "" {
-		return kubeConfigPath
-	}
-
-	userHomeDir, err := os.UserHomeDir()
-	if err == nil && userHomeDir != "" {
-		kubeConfigPath := filepath.Join(userHomeDir, ".kube", "config")
-		return kubeConfigPath
-	}
-
-	return ""
-}
-
-func ListNamespaces(client kubernetes.Interface) (*v1.NamespaceList, error) {
-	slog.Debug("Get Kubernetes Namespaces")
-	namespaces, err := client.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("error getting namespaces: %v", err)
-	}
-	return namespaces, nil
-}
-
-func getClient() (*kubernetes.Clientset, error) {
-
-	kubeConfigPath := findKubeconfig()
-	slog.Info("findKubeconfig", "kubeconfig", kubeConfigPath)
-
-	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting kubernetes config", err)
-	}
-
-	clientset, err := kubernetes.NewForConfig(kubeConfig)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting kubernetes config", err)
-	}
-	return clientset, nil
-}
+const (
+	FREQUENCY_CHECK_SECONDS = 10
+)
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-	clientset, err := getClient()
+	config.SetLogger()
+	registryConfig, err := config.GetRegistryConfig()
 	if err != nil {
-		slog.Error("Error finding kubeconfig", "error", err)
+		slog.Error("Error getting registry config", "error", err)
 		panic(err)
 	}
-	listNamespace, err := ListNamespaces(clientset)
-	if err != nil {
-		slog.Error("Error finding namespace", "error", err)
-		panic(err)
+
+	p, err := process.NewProcess(registryConfig)
+
+	switch registryConfig.GetType() {
+	case registry.ECR:
+		cfg, err := config.CreateIAMConfig()
+		if err != nil {
+			slog.Error("Error creating IAM config", "error", err)
+			panic(err)
+		}
+		p.Registry.(*registry.RegistryEcr).SetAwsConfig(*cfg)
+
+	case registry.DOCKER:
+		auths, err := config.GetRegistryAuth(p)
+		if err != nil {
+			slog.Error("Error getting docker registry auth", "error", err)
+			panic(err)
+		}
+		if auths != nil {
+			p.Registry.(*registry.RegistryDocker).SetAuths(auths)
+		}
 	}
-	slog.Debug("List", "namespace", listNamespace)
+
+	ticker := time.NewTicker(time.Second * FREQUENCY_CHECK_SECONDS)
+	done := make(chan bool)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				err = p.Tick()
+				if err != nil {
+					slog.Error("Error during main loop", "error", err)
+				}
+			}
+		}
+	}()
+	<-ctx.Done()
+	stop()
+	done <- true
 }
