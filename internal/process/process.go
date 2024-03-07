@@ -55,12 +55,14 @@ func (p *Process) Tick() error {
 			for _, pod := range pods.Items {
 				slog.Info("Selected pod", "pod", pod.GetName())
 				if pod.GetAnnotations() != nil && pod.GetAnnotations()["pod-reloader/ignore"] == "true" {
+					slog.Info("Pod ignored with annotation", "pod", pod.GetName())
 					break
 				}
 				if kube.IsReady(pod) {
+					slog.Info("Pod is ready", "pod", pod.GetName())
 					listImage := imageref.ExtractImages(pod)
 					for _, image := range listImage {
-						slog.Debug("Image", "image", image)
+						slog.Info("Image", "image", image)
 						digest, err := p.Registry.RetreiveImage(image)
 						if err != nil {
 							continue
@@ -87,7 +89,6 @@ func getClient() (*kubernetes.Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
-	slog.Info("findKubeconfig", "kubeconfig", kubeConfig)
 
 	clientset, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {

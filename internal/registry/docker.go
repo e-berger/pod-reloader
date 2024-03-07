@@ -52,6 +52,26 @@ func (d *RegistryDocker) RetreiveImage(i *imageref.ImageRef) (string, error) {
 	}
 
 	var authent []byte
+	if d.Auths != nil {
+		authent = d.GetAuth(i)
+	}
+
+	encodedRegistryAuth := ""
+	if string(authent) != "" {
+		encodedRegistryAuth = base64.StdEncoding.EncodeToString(authent)
+	}
+
+	imageName := i.Repository + ":" + i.Tag
+	out, err := cli.DistributionInspect(ctx, imageName, encodedRegistryAuth)
+	if err != nil {
+		return "", err
+	}
+	slog.Info("Image", "digest", out.Descriptor.Digest)
+	return out.Descriptor.Digest.String(), nil
+}
+
+func (d *RegistryDocker) GetAuth(i *imageref.ImageRef) []byte {
+	var authent []byte
 	for key, auth := range d.Auths.Auths {
 		if strings.HasPrefix(i.Repository, key) {
 			authBytes, err := base64.StdEncoding.DecodeString(auth.Auth)
@@ -69,17 +89,5 @@ func (d *RegistryDocker) RetreiveImage(i *imageref.ImageRef) (string, error) {
 			break
 		}
 	}
-
-	encodedRegistryAuth := ""
-	if string(authent) != "" {
-		encodedRegistryAuth = base64.StdEncoding.EncodeToString(authent)
-	}
-
-	imageName := i.Repository + ":" + i.Tag
-	out, err := cli.DistributionInspect(ctx, imageName, encodedRegistryAuth)
-	if err != nil {
-		return "", err
-	}
-	slog.Info("Image", "digest", out.Descriptor.Digest)
-	return out.Descriptor.Digest.String(), nil
+	return authent
 }

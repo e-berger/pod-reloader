@@ -18,6 +18,7 @@ func FindKubeconfig() (*rest.Config, error) {
 			slog.Info("Using in-cluster config")
 			config, err = rest.InClusterConfig()
 			if err != nil {
+				slog.Error("Error getting in-cluster config", "error", err)
 				return nil, err
 			}
 			return config, nil
