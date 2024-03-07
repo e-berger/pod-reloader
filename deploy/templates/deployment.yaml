@@ -40,6 +40,13 @@ spec:
               value: "{{ .Values.registry | default "docker" }}"
             - name: REGISTRY_AUTH_SECRET
               value: "{{ .Values.registryAuthSecret | default "dockerconfigjson" }}"
+          volumeMounts:
+            - name: dind-sock
+              mountPath: "/var/run/docker.sock"
+      volumes:
+        - name: dind-sock
+          hostPath:
+            path: "/var/run/docker.sock"
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -52,3 +59,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+

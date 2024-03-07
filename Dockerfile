@@ -20,5 +20,6 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder --chown=${APPUSER}:${APPUSER} /source/app /app
 WORKDIR /app
 USER ${APPUSER}:${APPUSER}
+RUN usermod -aG docker ${APPUSER}
 
 ENTRYPOINT ["./main"]
