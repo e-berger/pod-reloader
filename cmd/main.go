@@ -26,6 +26,9 @@ func main() {
 	}
 
 	p, err := process.NewProcess(registryConfig)
+	if err != nil {
+		slog.Error("Error creating process", "error", err)
+	}
 
 	switch registryConfig.GetType() {
 	case registry.ECR:

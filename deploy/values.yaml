@@ -16,3 +16,6 @@ serviceAccount:
 
 imagePullSecrets:
   - name: dockerconfigjson
+
+securityContext:
+  privileged: true
