@@ -58,6 +58,7 @@ func (d *RegistryDocker) RetreiveImage(i *imageref.ImageRef) (string, error) {
 
 	encodedRegistryAuth := ""
 	if string(authent) != "" {
+		slog.Info("Authent found")
 		encodedRegistryAuth = base64.StdEncoding.EncodeToString(authent)
 	}
 
