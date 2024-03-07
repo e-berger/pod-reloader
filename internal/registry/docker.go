@@ -46,7 +46,7 @@ func (d *RegistryDocker) String() string {
 
 func (d *RegistryDocker) RetreiveImage(i *imageref.ImageRef) (string, error) {
 	ctx := context.Background()
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.24"))
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.30"))
 	if err != nil {
 		return "", err
 	}
