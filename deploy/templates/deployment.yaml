@@ -2,10 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "pod-reloader.fullname" . }}
-  annotations:
-  {{- if .Values.reload.enabled }}
-    reloader.stakater.com/search: "true"
-  {{- end }}
   labels:
     {{- include "pod-reloader.labels" . | nindent 4 }}
 spec:
@@ -35,18 +31,13 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           imagePullPolicy: {{ default "IfNotPresent" .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.service.containerPort }}
-              protocol: TCP
-          envFrom:
-            - secretRef:
-                name: {{ include "pod-reloader.fullname" . }}-secret
           env:
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: REGISTRY
+              value: "{{ .Values.registry | default "DOCKER" }}"
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

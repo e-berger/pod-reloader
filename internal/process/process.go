@@ -13,7 +13,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Process struct {
@@ -84,13 +83,11 @@ func (p *Process) Tick() error {
 }
 
 func getClient() (*kubernetes.Clientset, error) {
-	kubeConfigPath := utils.FindKubeconfig()
-	slog.Info("findKubeconfig", "kubeconfig", kubeConfigPath)
-
-	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+	kubeConfig, err := utils.FindKubeconfig()
 	if err != nil {
-		return nil, fmt.Errorf("error getting kubernetes config: %v", err)
+		return nil, err
 	}
+	slog.Info("findKubeconfig", "kubeconfig", kubeConfig)
 
 	clientset, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {

@@ -13,3 +13,6 @@ affinity: {}
 serviceAccount:
   create: true
   name: pod-reloader
+
+imagePullSecrets:
+  - name: dockerconfigjson
