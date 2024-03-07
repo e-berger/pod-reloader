@@ -59,14 +59,16 @@ func (p *Process) Tick() error {
 					break
 				}
 				if kube.IsReady(pod) {
-					slog.Info("Pod is ready", "pod", pod.GetName())
+					slog.Info("Pod is ready")
 					listImage := imageref.ExtractImages(pod)
 					for _, image := range listImage {
 						slog.Info("Image", "image", image)
 						digest, err := p.Registry.RetreiveImage(image)
 						if err != nil {
+							slog.Error("Error during image retrieval", "error", err)
 							continue
 						}
+						slog.Info("From registry", "digest", digest)
 						if digest != image.Digest {
 							slog.Info("Reload image", "image", image)
 							err = kube.Rollout(p.Client, pod, namespace.GetName())
