@@ -37,7 +37,7 @@ func Rollout(clientset *kubernetes.Clientset, pod v1.Pod, namespace string) erro
 	deploymentName := deployments.Items[0].Name
 	slog.Info("Starting rolling out", "deployment", deploymentName)
 
-	deployment, err := clientset.AppsV1().Deployments("default").Get(context.TODO(), deploymentName, metav1.GetOptions{})
+	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("error getting deployment: %v", err)
 	}
