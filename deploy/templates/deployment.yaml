@@ -40,18 +40,6 @@ spec:
               value: "{{ .Values.registry | default "docker" }}"
             - name: REGISTRY_AUTH_SECRET
               value: "{{ .Values.registryAuthSecret | default "dockerconfigjson" }}"
-            - name: DOCKER_HOST
-              value: "unix:///run/containerd/containerd.sock"
-            - name: DOCKER_TLS_CERTDIR
-              value: ""
-          volumeMounts:
-            - name: dind-sock
-              mountPath: "/run/containerd/containerd.sock"
-      volumes:
-        - name: dind-sock
-          hostPath:
-            path: "/run/containerd/containerd.sock"
-            type: ""
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

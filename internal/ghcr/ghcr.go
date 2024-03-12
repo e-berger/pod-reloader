@@ -66,11 +66,11 @@ func GetDigestFromGithub(repository string, tag string, auth map[string]string) 
 }
 
 func parseManifest(data string) (*ImageIndex, error) {
-	var imageIndex *ImageIndex
-	err := json.Unmarshal([]byte(data), imageIndex)
+	var imageIndex ImageIndex
+	err := json.Unmarshal([]byte(data), &imageIndex)
 	if err != nil {
 		return nil, err
 	}
 
-	return imageIndex, nil
+	return &imageIndex, nil
 }

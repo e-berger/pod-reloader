@@ -4,17 +4,6 @@ image:
 
 replicaCount: 1
 
-nodeSelector:
-  finalcad/context: finalcad-runner
-  kubernetes.io/os: linux
-  node.kubernetes.io/lifecycle: spot
-
-
-tolerations:
-  - key: dedicated
-    value: "finalcad-runner"
-    effect: NoSchedule
-
 affinity: {}
 
 serviceAccount:
@@ -23,6 +12,3 @@ serviceAccount:
 
 imagePullSecrets:
   - name: dockerconfigjson
-
-securityContext:
-  privileged: true
