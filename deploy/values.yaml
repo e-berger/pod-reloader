@@ -4,9 +4,16 @@ image:
 
 replicaCount: 1
 
-nodeSelector: {}
+nodeSelector:
+  finalcad/context: finalcad-runner
+  kubernetes.io/os: linux
+  node.kubernetes.io/lifecycle: spot
 
-tolerations: []
+
+tolerations:
+  - key: dedicated
+    value: "finalcad-runner"
+    effect: NoSchedule
 
 affinity: {}
 
