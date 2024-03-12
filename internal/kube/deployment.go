@@ -15,10 +15,14 @@ import (
 func Rollout(clientset *kubernetes.Clientset, pod v1.Pod, namespace string) error {
 	labels := pod.Labels
 
+	if _, ok := labels["pod-template-hash"]; ok {
+		delete(labels, "pod-template-hash")
+	}
+
 	// Query deployments with matching labels
 	deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: labels["app.kubernetes.io/name"],
+			MatchLabels: labels,
 		}),
 	})
 	if err != nil {
@@ -62,8 +66,3 @@ func Rollout(clientset *kubernetes.Clientset, pod v1.Pod, namespace string) erro
 	}
 	return nil
 }
-
-
-app.kubernetes.io/instance: sheepdog-dispatcher
-app.kubernetes.io/name: sheepdog-dispatcher
-pod-template-hash: c87786b4b
