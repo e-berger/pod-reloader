@@ -3,19 +3,13 @@ package registry
 import (
 	"context"
 	"encoding/base64"
-	b64 "encoding/base64"
 	"encoding/json"
-	"io"
 	"log/slog"
-	"net/http"
 	"strings"
 
 	"github.com/docker/docker/client"
+	"github.com/e-berger/pod-reloader/internal/ghcr"
 	"github.com/e-berger/pod-reloader/internal/imageref"
-)
-
-const (
-	GHCRIO = "https://ghcr.io/v2/"
 )
 
 type Auths struct {
@@ -63,10 +57,11 @@ func (d *RegistryDocker) RetreiveImage(i *imageref.ImageRef) (string, error) {
 		}
 	}
 
-	var digest string
+	digest := ""
+	var err error
 
 	if strings.Contains(i.Repository, "ghcr.io") {
-		_, err := d.GetDigestFromGithub(i.Repository, i.Tag, authentValue)
+		digest, err = ghcr.GetDigestFromGithub(i.Repository, i.Tag, authentValue)
 		if err != nil {
 			return "", err
 		}
@@ -107,25 +102,4 @@ func (d *RegistryDocker) GetAuth(i *imageref.ImageRef) map[string]string {
 		}
 	}
 	return authent
-}
-
-func (d *RegistryDocker) GetDigestFromGithub(repository string, tag string, auth map[string]string) (string, error) {
-	httpURL := strings.Replace(repository, "ghcr.io/", GHCRIO, 1) + "/manifests/" + tag
-	slog.Info("Github registry", "url", httpURL)
-
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", httpURL, nil)
-	if auth != nil && auth["password"] != "" {
-		auth := b64.StdEncoding.EncodeToString([]byte(auth["password"]))
-		req.Header.Add("Authorization", "Bearer "+auth)
-	}
-	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", nil
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	slog.Info("body", body)
-	return "", nil
 }

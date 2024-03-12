@@ -69,7 +69,7 @@ func (p *Process) Tick() error {
 							continue
 						}
 						slog.Info("From registry", "digest", digest)
-						if digest != image.Digest {
+						if digest != "" && digest != image.Digest {
 							slog.Info("Reload image", "image", image)
 							err = kube.Rollout(p.Client, pod, namespace.GetName())
 							if err != nil {
