@@ -110,14 +110,14 @@ func (d *RegistryDocker) GetAuth(i *imageref.ImageRef) map[string]string {
 }
 
 func (d *RegistryDocker) GetDigestFromGithub(repository string, tag string, auth map[string]string) (string, error) {
-	httpURL := strings.Replace(repository, "ghcr.io", GHCRIO, 1) + "/manifests/" + tag
+	httpURL := strings.Replace(repository, "ghcr.io/", GHCRIO, 1) + "/manifests/" + tag
 	slog.Info("Github registry", "url", httpURL)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", httpURL, nil)
 	if auth != nil && auth["password"] != "" {
-		auth, _ := b64.StdEncoding.DecodeString(auth["password"])
-		req.Header.Add("Authorization", "Bearer"+string(auth))
+		auth := b64.StdEncoding.EncodeToString([]byte(auth["password"]))
+		req.Header.Add("Authorization", "Bearer "+auth)
 	}
 	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
 	resp, err := client.Do(req)
