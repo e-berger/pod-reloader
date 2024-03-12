@@ -17,7 +17,7 @@ import (
 	"github.com/e-berger/pod-reloader/internal/registry"
 )
 
-const SESSIONDURATION = 3600
+const SESSIONDURATION = 7200
 
 func SetLogger() {
 	lvl := new(slog.LevelVar)
