@@ -12,3 +12,5 @@ serviceAccount:
 
 imagePullSecrets:
   - name: dockerconfigjson
+
+frequencyCheckSeconds: 120

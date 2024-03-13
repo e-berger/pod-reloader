@@ -40,6 +40,8 @@ spec:
               value: "{{ .Values.registry | default "docker" }}"
             - name: REGISTRY_AUTH_SECRET
               value: "{{ .Values.registryAuthSecret | default "dockerconfigjson" }}"
+            - name: FREQUENCY_CHECK_SECONDS
+              value: "{{ .Values.frequencyCheckSeconds | default "60" }}"
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
