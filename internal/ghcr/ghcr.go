@@ -1,7 +1,6 @@
 package ghcr
 
 import (
-	b64 "encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -10,67 +9,66 @@ import (
 	"log/slog"
 )
 
-type Platform struct {
-	Architecture string `json:"architecture"`
-	OS           string `json:"os"`
-}
-
-// Define the struct for the manifest, including optional annotations
-type Manifest struct {
-	MediaType   string            `json:"mediaType"`
-	Digest      string            `json:"digest"`
-	Size        int               `json:"size"`
-	Platform    Platform          `json:"platform,omitempty"`
-	Annotations map[string]string `json:"annotations,omitempty"`
-}
-
-// Define the top-level struct for the whole JSON object
-type ImageIndex struct {
-	SchemaVersion int        `json:"schemaVersion"`
-	MediaType     string     `json:"mediaType"`
-	Manifests     []Manifest `json:"manifests"`
+type Package struct {
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	URL            string `json:"url"`
+	PackageHTMLURL string `json:"package_html_url"`
+	CreatedAt      string `json:"created_at"`
+	UpdatedAt      string `json:"updated_at"`
+	HTMLURL        string `json:"html_url"`
+	Metadata       struct {
+		PackageType string `json:"package_type"`
+		Container   struct {
+			Tags []string `json:"tags"`
+		} `json:"container"`
+	} `json:"metadata"`
 }
 
 const (
-	GHCRIO = "https://ghcr.io/v2/"
+	GHCRIO = "https://api.github.com/orgs/"
 )
 
 func GetDigestFromGithub(repository string, tag string, auth map[string]string) (string, error) {
-	httpURL := strings.Replace(repository, "ghcr.io/", GHCRIO, 1) + "/manifests/" + tag
+	httpURL := strings.Replace(repository, "ghcr.io/", GHCRIO, 1) + "/versions"
 	slog.Info("Github registry", "url", httpURL)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", httpURL, nil)
 	if auth != nil && auth["password"] != "" {
-		auth := b64.StdEncoding.EncodeToString([]byte(auth["password"]))
-		req.Header.Add("Authorization", "Bearer "+auth)
+		req.Header.Add("Authorization", "Bearer "+auth["password"])
 	}
-	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
+	req.Header.Add("Accept", "application/vnd.github+json")
+	req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", nil
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	imageIndex, err := parseManifest(string(body))
-	if err != nil {
+	jsonData, _ := io.ReadAll(resp.Body)
+
+	// Unmarshal the JSON data into a slice of Package structs
+	var packages []Package
+
+	if err := json.Unmarshal([]byte(jsonData), &packages); err != nil {
 		return "", err
 	}
 
-	for _, manifest := range imageIndex.Manifests {
-		if manifest.Platform.Architecture == "amd64" && manifest.Platform.OS == "linux" {
-			return manifest.Digest, nil
+	// Filter packages with non-empty tags
+	for _, p := range packages {
+		if len(p.Metadata.Container.Tags) > 0 && contains(p.Metadata.Container.Tags, tag) {
+			return p.Name, nil
 		}
 	}
+
 	return "", nil
 }
 
-func parseManifest(data string) (*ImageIndex, error) {
-	var imageIndex ImageIndex
-	err := json.Unmarshal([]byte(data), &imageIndex)
-	if err != nil {
-		return nil, err
+func contains(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
 	}
-
-	return &imageIndex, nil
+	return false
 }
