@@ -59,6 +59,9 @@ func Rollout(clientset *kubernetes.Clientset, pod v1.Pod, namespace string) erro
 		latestDeployment.Spec.Template.SetAnnotations(annotations)
 
 		_, updateErr := clientset.AppsV1().Deployments(deployment.Namespace).Update(context.TODO(), latestDeployment, metav1.UpdateOptions{})
+		if updateErr != nil {
+			slog.Error("Error updating deployment", "error", updateErr)
+		}
 		return updateErr
 	})
 	if retryErr != nil {
