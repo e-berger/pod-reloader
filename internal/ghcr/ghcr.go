@@ -30,7 +30,9 @@ const (
 )
 
 func GetDigestFromGithub(repository string, tag string, auth map[string]string) (string, error) {
-	httpURL := GHCRIO + strings.Replace(repository, "/", "/packages/container/", 1) + "/versions"
+
+	repositoryParts := strings.Split(repository, "/")
+	httpURL := GHCRIO + repositoryParts[1] + "/packages/container/" + repositoryParts[2] + "/versions"
 	slog.Info("Github registry", "url", httpURL)
 
 	client := &http.Client{}
